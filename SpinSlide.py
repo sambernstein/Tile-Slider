@@ -84,11 +84,22 @@ class Level():
     def __init__(self, square_dim, board_square_dim, tile_size = tile_size):
         """
         square_dim: the number of squares in each same-colored square
-        board_square_dim:   (n, m) where n x m is the num_rows x num_columns
+        board_square_dim:   (n, m) where n x m is the num_rows x num_columns of squares
         """
         self.board_square_dim = board_square_dim
         self.s = square_dim  # how many tiles make up each side of each square
         self.num_squares = board_square_dim[0] * board_square_dim[1] # total number of colors / same-colored subsquares
+        # a list of top left and bottom right tiles coordinate tuples for each square
+        self.squares = []
+        for row in range(self.board_square_dim[0]):
+            self.squares.append([])
+            for col in range(self.board_square_dim[1]):
+                self.squares[row].append(((row * self.s, col * self.s),(row*self.s + self.s - 1, col*self.s + self.s - 1)))
+        print("-"*20)
+        print("self.s = ", self.s)
+        print("self.board_square_dim = ", self.board_square_dim)
+        print("self.squares = ", str(self.squares))
+
         self.dim = (self.s * board_square_dim[0], self.s * board_square_dim[1])
 
         self.tile_size = tile_size
@@ -129,7 +140,7 @@ class Level():
 
         self.puzzle_solved = False
 
-    def rotate_square(self, sq, direction):
+    def rotate_square(self, selected, direction):
         """
         :param sq: which square to rotate
         :param direction: either 1 for counter-CC, -1 for CC, or 0 for 180 degrees
@@ -137,7 +148,7 @@ class Level():
         """
 
         if direction != None:
-            sqr = self.num_squares[self.selected]
+            sqr = self.squares[selected[0]][selected[1]]
             print("Square in question: ", sqr)
 
             if direction == 1:
@@ -178,7 +189,7 @@ class Level():
 
             elif direction == 0:
                 for n in range(2):
-                    self.rotate_square(1)
+                    self.rotate_square(selected, 1)
 
     def mouse_col(self, x):
         return int((x - self.x)//self.total_d)
@@ -199,8 +210,8 @@ class Level():
                 y_dist = abs(mouse_pos[1] - start_mouse_pos[1])
                 if x_dist > y_dist:
                     self.moving_row = self.click_tile[0]
-                else:
-                    self.moving_col = self.click_tile[1]
+                # else:
+                #     self.moving_col = self.click_tile[1]
                 self.click_tile = None
                 self.dragging = True
 
@@ -222,13 +233,13 @@ class Level():
             if horiz_displacement < -self.haf_total_d:
                 self.shift_row(self.moving_row, -1)
             
-        elif self.moving_col != None:
-            vert_displacement = dragging_factor*(mouse_pos[1] - start_mouse_pos[1]) + self.moving_col_disp
-
-            if vert_displacement > self.haf_total_d:
-                self.shift_column(self.moving_col, 1)
-            elif vert_displacement < -self.haf_total_d:
-                self.shift_column(self.moving_col, -1)
+        # elif self.moving_col != None:
+        #     vert_displacement = dragging_factor*(mouse_pos[1] - start_mouse_pos[1]) + self.moving_col_disp
+        #
+        #     if vert_displacement > self.haf_total_d:
+        #         self.shift_column(self.moving_col, 1)
+        #     elif vert_displacement < -self.haf_total_d:
+        #         self.shift_column(self.moving_col, -1)
 
     def get_neighbor(self, tile, disp): # returns the color of nearby tiles
         return self.board[tile[0] + disp[0]][tile[1] + disp[1]]
@@ -316,56 +327,56 @@ class Level():
                     i += 1
 
         if self.dragging:
-            if self.moving_col != None:
-                column = self.moving_col
+            # if self.moving_col != None:
+            #     column = self.moving_col
+            #
+            #     vert_displacement = dragging_factor*(mouse_pos[1] - start_mouse_pos[1]) + self.moving_col_disp
+            #
+            #     for row in range(len(self.board)): # draw each tile in column being dragged
+            #         left = self.x + column*self.total_d
+            #         top = self.y + row*self.total_d + vert_displacement
+            #
+            #         over = self.tile_size
+            #         down = self.tile_size
+            #
+            #         TILE_COLOR = self.board[row][column]
+            #
+            #         if top > self.y + self.dim[0]*self.total_d - self.haf_mar: # if top of tile is below bottom edge
+            #             self.moving_col_disp += -self.total_d
+            #
+            #             self.shift_column(column, 1)
+            #
+            #             self.draw_board()
+            #             break
+            #
+            #         elif top < self.y - self.tile_size - self.haf_mar: # if top of tile is above top edge
+            #             self.moving_col_disp += self.total_d
+            #
+            #             self.shift_column(column, -1)
+            #
+            #             self.draw_board()
+            #             break
+            #
+            #         if row == self.dim[0] - 1:
+            #             if vert_displacement > self.haf_mar:
+            #                 down = self.tile_size - vert_displacement + self.haf_mar
+            #
+            #                 pygame.draw.rect(screen, TILE_COLOR,[left, self.y - self.haf_mar, over, vert_displacement - self.haf_mar])
+            #
+            #         elif row == 0:
+            #             if vert_displacement < -self.haf_mar:
+            #                 top = self.y - self.haf_mar
+            #                 down = self.tile_size + vert_displacement + self.haf_mar
+            #
+            #                 pygame.draw.rect(screen, TILE_COLOR,[left, self.y + (self.dim[0])*self.total_d + vert_displacement, over, -vert_displacement - self.haf_mar])
+            #
+            #             elif vert_displacement < 0:
+            #                 top = self.y + vert_displacement
+            #                 down = self.tile_size
+            #
+            #         pygame.draw.rect(screen, TILE_COLOR,[left, top, over, down], 0)
 
-                vert_displacement = dragging_factor*(mouse_pos[1] - start_mouse_pos[1]) + self.moving_col_disp
-
-                for row in range(len(self.board)): # draw each tile in column being dragged
-                    left = self.x + column*self.total_d
-                    top = self.y + row*self.total_d + vert_displacement
-
-                    over = self.tile_size
-                    down = self.tile_size
-
-                    TILE_COLOR = self.board[row][column]
-
-                    if top > self.y + self.dim[0]*self.total_d - self.haf_mar: # if top of tile is below bottom edge
-                        self.moving_col_disp += -self.total_d
-
-                        self.shift_column(column, 1)
-
-                        self.draw_board()
-                        break
-
-                    elif top < self.y - self.tile_size - self.haf_mar: # if top of tile is above top edge
-                        self.moving_col_disp += self.total_d
-
-                        self.shift_column(column, -1)
-
-                        self.draw_board()
-                        break
-
-                    if row == self.dim[0] - 1:
-                        if vert_displacement > self.haf_mar:
-                            down = self.tile_size - vert_displacement + self.haf_mar
-
-                            pygame.draw.rect(screen, TILE_COLOR,[left, self.y - self.haf_mar, over, vert_displacement - self.haf_mar])
-
-                    elif row == 0:
-                        if vert_displacement < -self.haf_mar:
-                            top = self.y - self.haf_mar
-                            down = self.tile_size + vert_displacement + self.haf_mar
-
-                            pygame.draw.rect(screen, TILE_COLOR,[left, self.y + (self.dim[0])*self.total_d + vert_displacement, over, -vert_displacement - self.haf_mar])
-
-                        elif vert_displacement < 0:
-                            top = self.y + vert_displacement
-                            down = self.tile_size
-                    
-                    pygame.draw.rect(screen, TILE_COLOR,[left, top, over, down], 0)
-
-            elif self.moving_row != None:
+            if self.moving_row != None:
                 row = self.moving_row
 
                 horiz_displacement = dragging_factor*(mouse_pos[0] - start_mouse_pos[0]) + self.moving_row_disp
@@ -451,7 +462,7 @@ levels_const = {} # for storing a permanent copy of every level object
 
 level_index = 0
 test_ind = 0
-for square_size in range(2, 4):
+for square_size in range(2, 5):
     for row_num in range(1, 4):
         for col_num in range(row_num, 4):
             if not(col_num == row_num == 1):
@@ -475,7 +486,9 @@ for index in levels_const:
 
 current = test_ind # index of current level
 number_of_levels = len(levels)
- 
+
+rot_dir = None
+selected = (0,1)
 # -------- Main Program Loop -----------
 while not done:
     # --- Main event loop
@@ -513,16 +526,39 @@ while not done:
                             pause = not pause
                             done = True
 
+            # Square rotation
+            if event.key == pygame.K_1:
+                rot_dir = 1  # counter-clockwise
+            elif event.key == pygame.K_2:
+                rot_dir = -1  # clockwise
+
+            # Square rotation
+            if event.key == pygame.K_1:
+                selected = (0, 0)
+                rot_dir = 1  # counter-clockwise
+            elif event.key == pygame.K_2:
+                selected = (0, 0)
+                rot_dir = -1  # clockwise
+            elif event.key == pygame.K_9:
+                selected = (0, 1)
+                rot_dir = 1  # counter-clockwise
+            elif event.key == pygame.K_0:
+                selected = (0, 1)
+                rot_dir = -1  # clockwise
+
             if event.key == pygame.K_d:
                 current = (current + 1)%number_of_levels
             if event.key == pygame.K_s:
                 current = (current - 1)%number_of_levels
-            if event.key == pygame.K_0 or event.key == pygame.K_a:
+            if event.key == pygame.K_p or event.key == pygame.K_a:
                 levels[current].scramble()
 
  
     # --- Game logic should go here
-    
+    if rot_dir != None: # it is crucial that this is stored before .rotate_square(rot_dir) below so that square info for animation is not destroyed
+        pass
+        # levels[current].rotating.append(RotatingSquare(levels[current], rot_dir))
+
     levels[current].set_solved()
 
 
@@ -540,6 +576,9 @@ while not done:
 
     if levels[current].puzzle_solved:
         draw_check(10, 300, 40)
+
+    levels[current].rotate_square(selected, rot_dir)  # sets new board tile values instantaneously
+    rot_dir = None
 
  
     # --- Go ahead and update the screen with what we've drawn.
